@@ -54,8 +54,8 @@ public class BreakEncryption {
 		this.allCharacters = allCharacters;
 	}
 	
-	private void generatePassword() {
-		
+	private String concatPassword() {
+		return new String(password);
 	}
 	
 	private void initializeCharRange() {
@@ -93,8 +93,8 @@ public class BreakEncryption {
 				list.add('?');
 				list.add(' ');
 			}
-			
-			charRange = (Character[]) list.toArray();
+			charRange = new Character[list.size()];
+			list.toArray(charRange);
 		}
 	}
 	
@@ -102,7 +102,7 @@ public class BreakEncryption {
 		initializeCharRange();
 		
 		//temporario
-		toString();
+		System.out.println(toString());
 	}
 
 	@Override

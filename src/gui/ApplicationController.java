@@ -1,21 +1,18 @@
 package gui;
 
+import java.io.File;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
+import javafx.stage.FileChooser;
 import model.BreakEncryption;
 
 public class ApplicationController {
 	
 	private BreakEncryption breakEncryption = new BreakEncryption();
-
-    @FXML
-    private Button browseButton;
-
-    @FXML
-    private Button executeButton;
+	private File file;
 
     @FXML
     private TextField fileTextField;
@@ -34,7 +31,13 @@ public class ApplicationController {
 
     @FXML
     public void browseButtonAction(ActionEvent event) {
-
+    	FileChooser fileChooser = new FileChooser();
+    	fileChooser.setTitle("Selecione o arquivo");
+    	
+    	file = fileChooser.showOpenDialog(Utils.getElementStage(event));
+    	if(file != null) {
+    		fileTextField.setText(file.getAbsolutePath());
+    	}
     }
 
     @FXML
@@ -43,6 +46,6 @@ public class ApplicationController {
     	breakEncryption.setCharacter(characterCheckBox.isSelected());
     	breakEncryption.setSymbols(symbolsCheckbox.isSelected());
     	breakEncryption.setAllCharacters(allCharactersCheckBox.isSelected());
-    	breakEncryption.decrypt(null);
+    	breakEncryption.decrypt(file);
     }
 }
