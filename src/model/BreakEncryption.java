@@ -98,11 +98,54 @@ public class BreakEncryption {
 		}
 	}
 	
+	private void initializePasswordArray() {
+		for(int i = 0; i < password.length; ++i) {
+			password[i] = charRange[0];
+		}
+	}
+	
+	private void initializeCountArray(int[] count) {
+		count[0] = 0;
+		for(int i = 1; i < password.length; ++i) {
+			count[i] = 1;
+		}
+	}
+	
 	public void decrypt(File file) {
 		initializeCharRange();
 		
-		//temporario
-		System.out.println(toString());
+		//temp
+		digitsCount = 4;
+		
+		int[] count;
+		boolean encrypted = true;
+		while(encrypted) {
+			password = new char[digitsCount];
+			count = new int[digitsCount];
+			initializePasswordArray();
+			initializeCountArray(count);
+			int i = 0;
+			while(i < digitsCount) {
+				while(count[i] < charRange.length) {
+					password[i] = charRange[count[i]];
+					++count[i];
+					if(i > 0) {
+						for(int j = 0; j < i; ++j) {
+							count[j] = 0;
+							password[j] = charRange[count[j]];
+							++count[j];
+						}
+						i = 0;
+					}
+					System.out.println(Arrays.toString(password));
+				}
+				++i;
+			}
+			//++digitsCount;
+			
+			//temp
+			encrypted = false;
+		}
 	}
 
 	@Override
