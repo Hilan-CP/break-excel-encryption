@@ -1,9 +1,19 @@
 package model;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.apache.poi.poifs.crypt.Decryptor;
+import org.apache.poi.poifs.crypt.EncryptionInfo;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+
+import gui.Utils;
+import javafx.scene.control.Alert.AlertType;
 
 public class BreakEncryption {
 	private int digitsCount;
@@ -113,45 +123,54 @@ public class BreakEncryption {
 	
 	public void decrypt(File file) {
 		initializeCharRange();
-		
-		//temp
-		digitsCount = 4;
-		
-		int[] count;
-		boolean encrypted = true;
-		while(encrypted) {
-			password = new char[digitsCount];
-			count = new int[digitsCount];
-			initializePasswordArray();
-			initializeCountArray(count);
-			int i = 0;
-			while(i < digitsCount) {
-				while(count[i] < charRange.length) {
-					password[i] = charRange[count[i]];
-					++count[i];
-					if(i > 0) {
-						for(int j = 0; j < i; ++j) {
-							count[j] = 0;
-							password[j] = charRange[count[j]];
-							++count[j];
-						}
-						i = 0;
-					}
-					System.out.println(Arrays.toString(password));
-				}
-				++i;
-			}
-			//++digitsCount;
-			
-			//temp
-			encrypted = false;
-		}
-	}
+		LocalTime inicio = LocalTime.now();
 
-	@Override
-	public String toString() {
-		return "BreakEncryption [digitsCount=" + digitsCount + ", number=" + number + ", character=" + character
-				+ ", symbols=" + symbols + ", allCharacters=" + allCharacters + ", charRange="
-				+ Arrays.toString(charRange) + "]";
+		try {
+			POIFSFileSystem poifs = new POIFSFileSystem(file);
+			EncryptionInfo info = new EncryptionInfo(poifs);
+			Decryptor decryptor = Decryptor.getInstance(info);
+
+			String passwordString;
+			int[] count;
+			boolean encrypted = true;
+			while(encrypted) {
+				password = new char[digitsCount];
+				count = new int[digitsCount];
+				initializePasswordArray();
+				initializeCountArray(count);
+				int i = 0;
+				while(i < digitsCount) {
+					while(count[i] < charRange.length) {
+						password[i] = charRange[count[i]];
+						++count[i];
+						if(i > 0) {
+							for(int j = 0; j < i; ++j) {
+								count[j] = 0;
+								password[j] = charRange[count[j]];
+								++count[j];
+							}
+							i = 0;
+						}
+						passwordString = concatPassword();
+						System.out.println(passwordString);
+						if(decryptor.verifyPassword(passwordString)) {
+							Utils.showAlert("Senha encontrada", "A senha é: " + passwordString, AlertType.INFORMATION);
+							System.out.println(inicio);
+							System.out.println(LocalTime.now());
+							encrypted = false;
+							i = digitsCount;
+							poifs.close();
+							break;
+						}
+					}
+					++i;
+				}
+				++digitsCount;
+			}
+		} catch (IOException e) {
+			Utils.showAlert("IOException", e.getMessage(), AlertType.ERROR);
+		} catch (GeneralSecurityException e) {
+			Utils.showAlert("GeneralSecurityException", e.getMessage(), AlertType.ERROR);
+		}
 	}
 }
