@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.poi.poifs.crypt.Decryptor;
@@ -21,15 +20,13 @@ public class BreakEncryption {
 	private boolean number;
 	private boolean character;
 	private boolean symbols;
-	private boolean allCharacters;
 	private Character[] charRange; //caracteres permitidos para gerar uma senha
 	
-	public BreakEncryption() {
-		this.digitsCount = 1;
+	public BreakEncryption(int digitsCount) {
+		this.digitsCount = digitsCount;
 		this.number = false;
 		this.character = false;
 		this.symbols = false;
-		this.allCharacters = false;
 	}
 	
 	public boolean containsNumber() {
@@ -56,56 +53,39 @@ public class BreakEncryption {
 		this.symbols = symbols;
 	}
 	
-	public boolean containsAllCharacters() {
-		return allCharacters;
-	}
-	
-	public void setAllCharacters(boolean allCharacters) {
-		this.allCharacters = allCharacters;
-	}
-	
 	private String concatPassword() {
 		return new String(password);
 	}
 	
 	private void initializeCharRange() {
 		List<Character> list = new ArrayList<>();
+
+		if(number) {
+			for(int i = 48; i <= 57; ++i) {
+				list.add((char) i);
+			}
+		}
+		if(character) {
+			for(int i = 97; i <= 122; ++i) {
+				list.add((char) i);
+			}
+		}
+		if(symbols) {
+			list.add('!');
+			list.add('@');
+			list.add('#');
+			list.add('$');
+			list.add('%');
+			list.add('&');
+			list.add('*');
+			list.add('-');
+			list.add('+');
+			list.add('?');
+			list.add(' ');
+		}
 		
-		if(allCharacters) {
-			charRange = new Character[94];
-			for(int i = 0; i < charRange.length; ++i) {
-				charRange[i] = (char) (i + 32);
-			}
-		}
-		else {
-			if(number) {
-				for(int i = 48; i <= 57; ++i) {
-					list.add((char) i);
-				}
-			}
-			
-			if(character) {
-				for(int i = 97; i <= 122; ++i) {
-					list.add((char) i);
-				}
-			}
-			
-			if(symbols) {
-				list.add('!');
-				list.add('@');
-				list.add('#');
-				list.add('$');
-				list.add('%');
-				list.add('&');
-				list.add('*');
-				list.add('-');
-				list.add('+');
-				list.add('?');
-				list.add(' ');
-			}
-			charRange = new Character[list.size()];
-			list.toArray(charRange);
-		}
+		charRange = new Character[list.size()];
+		list.toArray(charRange);
 	}
 	
 	private void initializePasswordArray() {

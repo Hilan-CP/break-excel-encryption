@@ -1,17 +1,22 @@
 package gui;
 
 import java.io.File;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import model.BreakEncryption;
 
-public class ApplicationController {
+public class ApplicationController implements Initializable {
 	
-	private BreakEncryption breakEncryption = new BreakEncryption();
+	private BreakEncryption breakEncryption;
 	private File file;
 
     @FXML
@@ -27,7 +32,7 @@ public class ApplicationController {
     private CheckBox symbolsCheckbox;
     
     @FXML
-    private CheckBox allCharactersCheckBox;
+    private Spinner<Integer> digitsCountSpinner;
 
     @FXML
     public void browseButtonAction(ActionEvent event) {
@@ -42,10 +47,31 @@ public class ApplicationController {
 
     @FXML
     public void executeButtonAction(ActionEvent event) {
+    	/*
+    	 * to do
+    	 * verificar se algum checkbox esta selecionado
+    	 * isCheckBoxSelected
+    	 * lançar exceção
+    	 */
+    	
+    	breakEncryption = new BreakEncryption(digitsCountSpinner.getValue());
     	breakEncryption.setNumber(numberCheckBox.isSelected());
     	breakEncryption.setCharacter(characterCheckBox.isSelected());
     	breakEncryption.setSymbols(symbolsCheckbox.isSelected());
-    	breakEncryption.setAllCharacters(allCharactersCheckBox.isSelected());
     	breakEncryption.decrypt(file);
     }
+    
+    private boolean isCheckBoxSelected() {
+    	return numberCheckBox.isSelected() && characterCheckBox.isSelected() && symbolsCheckbox.isSelected();
+    }
+
+	@Override
+	public void initialize(URL url, ResourceBundle rb) {
+		initializeSpinner();
+	}
+	
+	private void initializeSpinner() {
+		SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 10);
+		digitsCountSpinner.setValueFactory(valueFactory);
+	}
 }
