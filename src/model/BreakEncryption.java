@@ -3,7 +3,7 @@ package model;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,35 +14,38 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import gui.Utils;
 import javafx.scene.control.Alert.AlertType;
 
-public class BreakEncryption {
+public class BreakEncryption implements Runnable{
+	private static boolean encrypted = true;
+	private static File file = null;
+	
 	private int digitsCount;
 	private char[] password;
-	private boolean number;
-	private boolean character;
+	private boolean numbers;
+	private boolean characters;
 	private boolean symbols;
 	private Character[] charRange; //caracteres permitidos para gerar uma senha
 	
 	public BreakEncryption(int digitsCount) {
 		this.digitsCount = digitsCount;
-		this.number = false;
-		this.character = false;
+		this.numbers = false;
+		this.characters = false;
 		this.symbols = false;
 	}
 	
-	public boolean containsNumber() {
-		return number;
+	public boolean containsNumbers() {
+		return numbers;
 	}
 	
-	public void setNumber(boolean number) {
-		this.number = number;
+	public void setNumbers(boolean number) {
+		this.numbers = number;
 	}
 	
-	public boolean containsCharacter() {
-		return character;
+	public boolean containsCharacters() {
+		return characters;
 	}
 	
-	public void setCharacter(boolean character) {
-		this.character = character;
+	public void setCharacters(boolean character) {
+		this.characters = character;
 	}
 	
 	public boolean containsSymbols() {
@@ -53,6 +56,10 @@ public class BreakEncryption {
 		this.symbols = symbols;
 	}
 	
+	public static void setFile(File file) {
+		BreakEncryption.file = file;
+	}
+	
 	private String concatPassword() {
 		return new String(password);
 	}
@@ -60,12 +67,12 @@ public class BreakEncryption {
 	private void initializeCharRange() {
 		List<Character> list = new ArrayList<>();
 
-		if(number) {
+		if(numbers) {
 			for(int i = 48; i <= 57; ++i) {
 				list.add((char) i);
 			}
 		}
-		if(character) {
+		if(characters) {
 			for(int i = 97; i <= 122; ++i) {
 				list.add((char) i);
 			}
@@ -100,10 +107,11 @@ public class BreakEncryption {
 			count[i] = 1;
 		}
 	}
-	
-	public void decrypt(File file) {
+
+	@Override
+	public void run() {
 		initializeCharRange();
-		LocalTime inicio = LocalTime.now();
+		LocalDateTime inicio = LocalDateTime.now();
 
 		try {
 			POIFSFileSystem poifs = new POIFSFileSystem(file);
@@ -112,7 +120,7 @@ public class BreakEncryption {
 
 			String passwordString;
 			int[] count;
-			boolean encrypted = true;
+
 			while(encrypted) {
 				password = new char[digitsCount];
 				count = new int[digitsCount];
@@ -120,9 +128,11 @@ public class BreakEncryption {
 				initializeCountArray(count);
 				int i = 0;
 				while(i < digitsCount) {
-					while(count[i] < charRange.length) {
+					while(encrypted && count[i] < charRange.length) {
 						password[i] = charRange[count[i]];
 						++count[i];
+
+						//apos trocar a posicao do digito da senha, limpe os contadores de digitos anteriores
 						if(i > 0) {
 							for(int j = 0; j < i; ++j) {
 								count[j] = 0;
@@ -131,22 +141,23 @@ public class BreakEncryption {
 							}
 							i = 0;
 						}
+
 						passwordString = concatPassword();
 						System.out.println(passwordString);
 						if(decryptor.verifyPassword(passwordString)) {
 							Utils.showAlert("Senha encontrada", "A senha é: " + passwordString, AlertType.INFORMATION);
-							System.out.println(inicio);
-							System.out.println(LocalTime.now());
+							System.out.println(inicio); //inicio
+							System.out.println(LocalDateTime.now()); //fim
 							encrypted = false;
-							i = digitsCount;
-							poifs.close();
-							break;
 						}
 					}
 					++i;
 				}
 				++digitsCount;
 			}
+
+			poifs.close();
+
 		} catch (IOException e) {
 			Utils.showAlert("IOException", e.getMessage(), AlertType.ERROR);
 		} catch (GeneralSecurityException e) {

@@ -55,10 +55,19 @@ public class ApplicationController implements Initializable {
     	 */
     	
     	breakEncryption = new BreakEncryption(digitsCountSpinner.getValue());
-    	breakEncryption.setNumber(numberCheckBox.isSelected());
-    	breakEncryption.setCharacter(characterCheckBox.isSelected());
+    	breakEncryption.setNumbers(numberCheckBox.isSelected());
+    	breakEncryption.setCharacters(characterCheckBox.isSelected());
     	breakEncryption.setSymbols(symbolsCheckbox.isSelected());
-    	breakEncryption.decrypt(file);
+    	BreakEncryption.setFile(file);
+    	
+    	Thread thread = new Thread(breakEncryption);
+    	thread.start();
+    	
+    	/*
+    	 * to do
+    	 * finalizar thread quando a janela for fechada
+    	 * utilizar variavel encrypted para finalizar thread
+    	 */
     }
     
     private boolean isCheckBoxSelected() {
