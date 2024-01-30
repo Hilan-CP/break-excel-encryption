@@ -17,7 +17,9 @@ import javafx.scene.control.Alert.AlertType;
 public class BreakEncryption implements Runnable{
 	private static boolean encrypted = true;
 	private static File file = null;
+	private static int processors = 1;
 	
+	private int processorNumber;
 	private int digitsCount;
 	private char[] password;
 	private boolean numbers;
@@ -25,11 +27,12 @@ public class BreakEncryption implements Runnable{
 	private boolean symbols;
 	private Character[] charRange; //caracteres permitidos para gerar uma senha
 	
-	public BreakEncryption(int digitsCount) {
+	public BreakEncryption(int digitsCount, int processorNumber) {
 		this.digitsCount = digitsCount;
 		this.numbers = false;
 		this.characters = false;
 		this.symbols = false;
+		this.processorNumber = processorNumber;
 	}
 	
 	public boolean containsNumbers() {
@@ -60,6 +63,14 @@ public class BreakEncryption implements Runnable{
 		BreakEncryption.file = file;
 	}
 	
+	public static void setEncrypted(boolean encrypted) {
+		BreakEncryption.encrypted = encrypted;
+	}
+	
+	public static void setProcessors(int processors) {
+		BreakEncryption.processors = processors;
+	}
+
 	private String concatPassword() {
 		return new String(password);
 	}
@@ -102,7 +113,7 @@ public class BreakEncryption implements Runnable{
 	}
 	
 	private void initializeCountArray(int[] count) {
-		count[0] = 0;
+		count[0] = processorNumber;
 		for(int i = 1; i < password.length; ++i) {
 			count[i] = 1;
 		}
@@ -130,11 +141,15 @@ public class BreakEncryption implements Runnable{
 				while(i < digitsCount) {
 					while(encrypted && count[i] < charRange.length) {
 						password[i] = charRange[count[i]];
-						++count[i];
+						if(i > 0){
+							++count[i];
+						}
+						count[0] = count[0] + processors;
 
 						//apos trocar a posicao do digito da senha, limpe os contadores de digitos anteriores
 						if(i > 0) {
-							for(int j = 0; j < i; ++j) {
+							password[0] = charRange[processorNumber];
+							for(int j = 1; j < i; ++j) {
 								count[j] = 0;
 								password[j] = charRange[count[j]];
 								++count[j];
@@ -143,7 +158,7 @@ public class BreakEncryption implements Runnable{
 						}
 
 						passwordString = concatPassword();
-						System.out.println(passwordString);
+						System.out.println("p" + processorNumber + ";" + passwordString);
 						if(decryptor.verifyPassword(passwordString)) {
 							Utils.showAlert("Senha encontrada", "A senha é: " + passwordString, AlertType.INFORMATION);
 							System.out.println(inicio); //inicio
@@ -151,6 +166,7 @@ public class BreakEncryption implements Runnable{
 							encrypted = false;
 						}
 					}
+					count[0] = processorNumber;
 					++i;
 				}
 				++digitsCount;

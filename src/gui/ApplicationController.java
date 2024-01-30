@@ -16,7 +16,7 @@ import model.BreakEncryption;
 
 public class ApplicationController implements Initializable {
 	
-	private BreakEncryption breakEncryption;
+	private BreakEncryption[] breakEncryption;
 	private File file;
 
     @FXML
@@ -53,15 +53,26 @@ public class ApplicationController implements Initializable {
     	 * isCheckBoxSelected
     	 * lançar exceção
     	 */
+    	int processors = Runtime.getRuntime().availableProcessors();
+    	if(processors > 10) {
+    		processors = 10;
+    	}
     	
-    	breakEncryption = new BreakEncryption(digitsCountSpinner.getValue());
-    	breakEncryption.setNumbers(numberCheckBox.isSelected());
-    	breakEncryption.setCharacters(characterCheckBox.isSelected());
-    	breakEncryption.setSymbols(symbolsCheckbox.isSelected());
+    	breakEncryption = new BreakEncryption[processors];
+    	Thread[] thread = new Thread[processors];
     	BreakEncryption.setFile(file);
+    	BreakEncryption.setProcessors(processors);
+    	for(int p = 0; p < processors; ++p) {
+    		breakEncryption[p] = new BreakEncryption(digitsCountSpinner.getValue(), p);
+    		breakEncryption[p].setNumbers(numberCheckBox.isSelected());
+    		breakEncryption[p].setCharacters(characterCheckBox.isSelected());
+    		breakEncryption[p].setSymbols(symbolsCheckbox.isSelected());
+        	thread[p] = new Thread(breakEncryption[p]);
+    	}
     	
-    	Thread thread = new Thread(breakEncryption);
-    	thread.start();
+    	for(int p = 0; p < processors; ++p) {
+    		thread[p].start();
+    	}
     	
     	/*
     	 * to do
