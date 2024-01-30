@@ -11,9 +11,6 @@ import org.apache.poi.poifs.crypt.Decryptor;
 import org.apache.poi.poifs.crypt.EncryptionInfo;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 
-import gui.Utils;
-import javafx.scene.control.Alert.AlertType;
-
 public class BreakEncryption implements Runnable{
 	private static boolean encrypted = true;
 	private static File file = null;
@@ -89,17 +86,7 @@ public class BreakEncryption implements Runnable{
 			}
 		}
 		if(symbols) {
-			list.add('!');
-			list.add('@');
-			list.add('#');
-			list.add('$');
-			list.add('%');
-			list.add('&');
-			list.add('*');
-			list.add('-');
-			list.add('+');
-			list.add('?');
-			list.add(' ');
+			list.addAll(List.of('!', '@', '#', '$', '%', '&', '*', '-', '+', '?', ' '));
 		}
 		
 		charRange = new Character[list.size()];
@@ -160,10 +147,10 @@ public class BreakEncryption implements Runnable{
 						passwordString = concatPassword();
 						System.out.println("p" + processorNumber + ";" + passwordString);
 						if(decryptor.verifyPassword(passwordString)) {
-							Utils.showAlert("Senha encontrada", "A senha é: " + passwordString, AlertType.INFORMATION);
+							encrypted = false;
+							System.out.println("Senha encontrada: " + passwordString);
 							System.out.println(inicio); //inicio
 							System.out.println(LocalDateTime.now()); //fim
-							encrypted = false;
 						}
 					}
 					count[0] = processorNumber;
@@ -175,9 +162,14 @@ public class BreakEncryption implements Runnable{
 			poifs.close();
 
 		} catch (IOException e) {
-			Utils.showAlert("IOException", e.getMessage(), AlertType.ERROR);
+			//Utils.showAlert("IOException", e.getMessage(), AlertType.ERROR);
+			System.out.println("IOException: " + e.getMessage());
 		} catch (GeneralSecurityException e) {
-			Utils.showAlert("GeneralSecurityException", e.getMessage(), AlertType.ERROR);
+			//Utils.showAlert("GeneralSecurityException", e.getMessage(), AlertType.ERROR);
+			System.out.println("GeneralSecurityException: " + e.getMessage());
+		} catch(Exception e) {
+			//Utils.showAlert("Exception", "Erro inesperado\n" + e.getMessage(), AlertType.ERROR);
+			System.out.println("Exception: " + e.getMessage());
 		}
 	}
 }
