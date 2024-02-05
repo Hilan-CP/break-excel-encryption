@@ -17,11 +17,6 @@ public class Main extends Application {
 			primaryStage.setScene(scene);
 			primaryStage.setTitle("Quebra senha Excel");
 			primaryStage.setResizable(false);
-			
-			//finalizar threads
-			//temporario
-			primaryStage.setOnCloseRequest(event -> BreakEncryption.setEncrypted(false));
-			
 			primaryStage.show();
 		} catch(Exception e) {
 			e.printStackTrace();

@@ -13,11 +13,13 @@ import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import model.BreakEncryption;
 
 public class ApplicationController implements Initializable {
 	
 	private BreakEncryption[] breakEncryption;
+	private BackgroundThread bgt;
 	private File file;
 
     @FXML
@@ -48,27 +50,31 @@ public class ApplicationController implements Initializable {
 
     @FXML
     public void executeButtonAction(ActionEvent event) {
+    	Stage currentStage = Utils.getElementStage(event);
+    	currentStage.setOnCloseRequest(e -> bgt.terminate());
+    	
     	if(file != null && isChecked()) {
     		int processors = Runtime.getRuntime().availableProcessors();
         	if(processors > 10) {
-        		processors = 1;
+        		processors = 10;
         	}
         	
         	breakEncryption = new BreakEncryption[processors];
-        	Thread[] thread = new Thread[processors];
         	BreakEncryption.setFile(file);
         	BreakEncryption.setProcessors(processors);
+        	
         	for(int p = 0; p < processors; ++p) {
         		breakEncryption[p] = new BreakEncryption(digitsCountSpinner.getValue(), p);
         		breakEncryption[p].setNumbers(numberCheckBox.isSelected());
         		breakEncryption[p].setCharacters(characterCheckBox.isSelected());
         		breakEncryption[p].setSymbols(symbolsCheckbox.isSelected());
-            	thread[p] = new Thread(breakEncryption[p]);
         	}
-        	
-        	for(int p = 0; p < processors; ++p) {
-        		thread[p].start();
-        	}
+    		
+        	bgt = new BackgroundThread(breakEncryption);
+        	Thread background = new Thread(bgt);
+        	background.setName("Background");
+        	background.setDaemon(true);
+        	background.start();
     	}
     	else {
     		Utils.showAlert("Atenção!", "Escolha um arquivo e marque uma opção", AlertType.WARNING);

@@ -3,15 +3,15 @@ package model;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.apache.poi.poifs.crypt.Decryptor;
 import org.apache.poi.poifs.crypt.EncryptionInfo;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 
-public class BreakEncryption implements Runnable{
+public class BreakEncryption implements Callable<String>{
 	private static boolean encrypted = true;
 	private static File file = null;
 	private static int processors = 1;
@@ -68,6 +68,10 @@ public class BreakEncryption implements Runnable{
 		BreakEncryption.processors = processors;
 	}
 
+	public static int getProcessors() {
+		return processors;
+	}
+
 	private String concatPassword() {
 		return new String(password);
 	}
@@ -107,12 +111,10 @@ public class BreakEncryption implements Runnable{
 	}
 
 	@Override
-	public void run() {
+	public String call() {
 		initializeCharRange();
-		LocalDateTime inicio = LocalDateTime.now();
 
-		try {
-			POIFSFileSystem poifs = new POIFSFileSystem(file);
+		try (POIFSFileSystem poifs = new POIFSFileSystem(file)) {
 			EncryptionInfo info = new EncryptionInfo(poifs);
 			Decryptor decryptor = Decryptor.getInstance(info);
 
@@ -128,13 +130,11 @@ public class BreakEncryption implements Runnable{
 				while(i < digitsCount) {
 					while(encrypted && count[i] < charRange.length) {
 						password[i] = charRange[count[i]];
-						if(i > 0){
-							++count[i];
-						}
 						count[0] = count[0] + processors;
 
-						//apos trocar a posicao do digito da senha, limpe os contadores de digitos anteriores
+						//apos trocar a posicao do digito da senha, incremente o contador atual e limpe os anteriores
 						if(i > 0) {
+							++count[i];
 							password[0] = charRange[processorNumber];
 							for(int j = 1; j < i; ++j) {
 								count[j] = 0;
@@ -147,10 +147,7 @@ public class BreakEncryption implements Runnable{
 						passwordString = concatPassword();
 						System.out.println("p" + processorNumber + ";" + passwordString);
 						if(decryptor.verifyPassword(passwordString)) {
-							encrypted = false;
-							System.out.println("Senha encontrada: " + passwordString);
-							System.out.println(inicio); //inicio
-							System.out.println(LocalDateTime.now()); //fim
+							return passwordString;
 						}
 					}
 					count[0] = processorNumber;
@@ -158,18 +155,14 @@ public class BreakEncryption implements Runnable{
 				}
 				++digitsCount;
 			}
-
-			poifs.close();
-
 		} catch (IOException e) {
-			//Utils.showAlert("IOException", e.getMessage(), AlertType.ERROR);
 			System.out.println("IOException: " + e.getMessage());
 		} catch (GeneralSecurityException e) {
-			//Utils.showAlert("GeneralSecurityException", e.getMessage(), AlertType.ERROR);
 			System.out.println("GeneralSecurityException: " + e.getMessage());
 		} catch(Exception e) {
-			//Utils.showAlert("Exception", "Erro inesperado\n" + e.getMessage(), AlertType.ERROR);
 			System.out.println("Exception: " + e.getMessage());
 		}
+		
+		return null;
 	}
 }
