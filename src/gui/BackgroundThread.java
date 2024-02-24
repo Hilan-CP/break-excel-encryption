@@ -6,42 +6,41 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import model.BreakEncryption;
+import model.ExcelDecryptor;
 
+//permite executar tarefas sem bloquear a interface gráfica
 public class BackgroundThread implements Runnable{
 	
 	private ExecutorService executor;
-	private BreakEncryption[] breakEncryption;
+	private ExcelDecryptor[] decryptors;
 	
-	public BackgroundThread(BreakEncryption[] breakEncryption) {
-		this.breakEncryption = breakEncryption;
+	public BackgroundThread(ExcelDecryptor[] decryptors) {
+		this.decryptors = decryptors;
 	}
 
 	@Override
 	public void run() {
-    	executor = Executors.newFixedThreadPool(BreakEncryption.getProcessors());
-    	
+    	executor = Executors.newFixedThreadPool(ExcelDecryptor.getProcessors());
 		try {
-    		LocalDateTime inicio = LocalDateTime.now();
-			String password = executor.invokeAny(List.of(breakEncryption));
-			LocalDateTime fim = LocalDateTime.now();
+    		LocalDateTime beginingTime = LocalDateTime.now();
+			String password = executor.invokeAny(List.of(decryptors));
+			LocalDateTime endingTime = LocalDateTime.now();
 			executor.shutdown();
 			
 			if(password != null) {
 				System.out.println("Senha encontrada: " + password);
-				System.out.println(inicio);
-				System.out.println(fim);
+				System.out.println("Início: " + beginingTime);
+				System.out.println("Fim: " + endingTime);
 			}
 		} catch (InterruptedException | ExecutionException e) {
-			System.out.println("Exceção de threads: " + e.getMessage());
+			System.out.println(e.getMessage());
 		} finally {
 			terminate();
 		}
 	}
 	
 	public void terminate() {
-		BreakEncryption.setEncrypted(false);
-		
+		ExcelDecryptor.setEncrypted(false);
 		if(!executor.isShutdown()) {
 			executor.shutdownNow();
 		}
